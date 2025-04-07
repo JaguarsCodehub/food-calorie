@@ -50,25 +50,27 @@ const FoodSearch: React.FC<FoodSearchProps> = ({ onSelectFood, onClearQuery }) =
   };
 
   return (
-    <div className="mb-6">
-      <h1 className="text-2xl font-bold text-gray-800 mb-2">Search for Food</h1>
+    <div className='mb-6'>
+      <h1 className='text-2xl font-bold text-gray-800 mb-2'>Search for Food</h1>
       <input
-        type="text"
-        placeholder="Search for food..."
+        type='text'
+        placeholder='Search for food...'
         value={query}
         onChange={(e) => setQuery(e.target.value)}
-        className="border border-gray-300 rounded-md p-2 w-full text-gray-700"
+        className='border border-gray-300 rounded-md p-2 w-full text-gray-700'
       />
-      {loading && <p className="text-gray-500">Loading...</p>}
-      <ul className="mt-2 bg-white border border-gray-300 rounded-md shadow-md">
+      {loading && <p className='text-gray-500'>Loading...</p>}
+      <ul className='mt-2 bg-white border border-gray-300 rounded-md shadow-md'>
         {results.map((food, index) => (
-          <li
-            key={index}
-            onClick={() => handleSelect(food)}
-            className="cursor-pointer hover:bg-gray-200 p-2 transition duration-200"
-          >
-            {food.food_name} - {food.nf_calories} cal
-          </li>
+          <div key={index}>
+            <li
+              key={index}
+              onClick={() => handleSelect(food)}
+              className='cursor-pointer hover:bg-gray-200 p-2 transition duration-200'
+            >
+              {food.food_name} - {food.nf_calories} cal
+            </li>
+          </div>
         ))}
       </ul>
     </div>

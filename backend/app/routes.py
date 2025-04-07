@@ -73,7 +73,8 @@ async def analyze_food(file: UploadFile = File(...)):
             MaxLabels=20,
             MinConfidence=60
         )
-        
+
+
         food_items = []
         total_calories = 0
         

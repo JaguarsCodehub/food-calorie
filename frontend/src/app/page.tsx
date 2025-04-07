@@ -103,6 +103,12 @@ export default function Home() {
     handleAddFood(newFood);
   };
 
+  const handleDeleteFood = (index: number) => {
+    const foodToDelete = foodEntries[index];
+    setFoodEntries((prevEntries) => prevEntries.filter((_, i) => i !== index));
+    setTotalCalories((prevTotal) => prevTotal - foodToDelete.calories);
+  };
+
   const clearQuery = () => {
     // This function can be used to clear any additional state if needed
   };
@@ -222,13 +228,25 @@ export default function Home() {
                 <tr className='bg-gray-200 text-gray-600 uppercase text-sm leading-normal'>
                   <th className='py-3 px-6 text-left'>Food</th>
                   <th className='py-3 px-6 text-left'>Calories</th>
+                  <th className='py-1 px-2 text-left'>Remove</th>
                 </tr>
               </thead>
               <tbody className='text-gray-600 text-sm font-light'>
                 {foodEntries.map((entry, index) => (
-                  <tr key={index} className='border-b border-gray-300 hover:bg-gray-100'>
+                  <tr
+                    key={index}
+                    className='border-b border-gray-300 hover:bg-gray-100'
+                  >
                     <td className='py-3 px-6'>{entry.name}</td>
                     <td className='py-3 px-6'>{entry.calories} cal</td>
+                    <td className='py-3 px-6'>
+                      <button
+                        onClick={() => handleDeleteFood(index)}
+                        className='text-red-500 hover:text-red-700'
+                      >
+                        Delete
+                      </button>
+                    </td>
                   </tr>
                 ))}
               </tbody>
