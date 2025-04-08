@@ -11,6 +11,8 @@ import FoodDiary from '@/components/FoodDiary';
 // import { FaBarcode } from 'react-icons/fa';
 // import ManualFoodEntry from '@/components/ManualFoodEntry';
 import FoodSearch from '@/components/FoodSearch';
+import { FaBarcode } from 'react-icons/fa';
+import BarcodeScanner from '@/components/BarCodeScanner';
 
 interface NutritionInfo {
   name: string;
@@ -24,6 +26,7 @@ interface NutritionInfo {
   sugars: number;
   sodium: number;
   cholesterol: number;
+  servingSize: number;
 }
 
 interface Results {
@@ -38,7 +41,7 @@ export default function Home() {
   const [results, setResults] = useState<Results | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
   const [diaryEntries, setDiaryEntries] = useState<{ name: string; calories: number; date: string }[]>([]);
-  const [foodEntries, setFoodEntries] = useState<{ name: string; calories: number }[]>([]);
+  const [foodEntries, setFoodEntries] = useState<NutritionInfo[]>([]);
   const [totalCalories, setTotalCalories] = useState(0);
 
   // const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -75,14 +78,14 @@ export default function Home() {
     }
   };
 
-  // const handleBarcodeDetected = async (barcode: string) => {
-  //   try {
-  //     const response = await axios.get(`http://localhost:8000/barcode/${barcode}`);
-  //     setResults(response.data);
-  //   } catch (error) {
-  //     console.error('Error fetching barcode data:', error);
-  //   }
-  // };
+  const handleBarcodeDetected = async (barcode: string) => {
+    try {
+      const response = await axios.get(`http://localhost:8000/barcode/${barcode}`);
+      setResults(response.data);
+    } catch (error) {
+      console.error('Error fetching barcode data:', error);
+    }
+  };
 
   const addToDiary = (item: NutritionInfo) => {
     const newEntry = {
@@ -93,14 +96,16 @@ export default function Home() {
     setDiaryEntries((prevEntries) => [...prevEntries, newEntry]);
   };
 
-  const handleAddFood = (food: { name: string; calories: number }) => {
-    setFoodEntries((prevEntries) => [...prevEntries, food]);
+  const handleAddFood = (food: NutritionInfo) => {
+    setFoodEntries((prevEntries) => [
+      ...prevEntries,
+      { ...food, servingSize: 1 },
+    ]); 
     setTotalCalories((prevTotal) => prevTotal + food.calories);
   };
 
-  const handleSelectFood = (food: { food_name: string; nf_calories: number }) => {
-    const newFood = { name: food.food_name, calories: food.nf_calories };
-    handleAddFood(newFood);
+  const handleSelectFood = (food: NutritionInfo) => {
+    handleAddFood(food);
   };
 
   const handleDeleteFood = (index: number) => {
@@ -111,6 +116,48 @@ export default function Home() {
 
   const clearQuery = () => {
     // This function can be used to clear any additional state if needed
+  };
+
+  const updateServingSize = (index: number, change: number) => {
+    setFoodEntries((prevEntries) => {
+      const updatedEntries = [...prevEntries];
+      const foodItem = updatedEntries[index];
+      const newServingSize = Math.max(1, foodItem.servingSize + change); // Ensure serving size doesn't go below 1
+
+      // Calculate the difference in calories and nutritional values
+      const calorieDifference =
+        foodItem.calories * (newServingSize - foodItem.servingSize);
+      const proteinDifference =
+        foodItem.protein * (newServingSize - foodItem.servingSize);
+      const fatDifference =
+        foodItem.fat * (newServingSize - foodItem.servingSize);
+      const carbDifference =
+        foodItem.carbohydrates * (newServingSize - foodItem.servingSize);
+      const sugarDifference =
+        foodItem.sugars * (newServingSize - foodItem.servingSize);
+      const fiberDifference =
+        foodItem.fiber * (newServingSize - foodItem.servingSize);
+      const sodiumDifference =
+        foodItem.sodium * (newServingSize - foodItem.servingSize);
+      const cholesterolDifference =
+        foodItem.cholesterol * (newServingSize - foodItem.servingSize);
+
+      updatedEntries[index] = {
+        ...foodItem,
+        servingSize: newServingSize,
+        calories: foodItem.calories + calorieDifference,
+        protein: foodItem.protein + proteinDifference,
+        fat: foodItem.fat + fatDifference,
+        carbohydrates: foodItem.carbohydrates + carbDifference,
+        sugars: foodItem.sugars + sugarDifference,
+        fiber: foodItem.fiber + fiberDifference,
+        sodium: foodItem.sodium + sodiumDifference,
+        cholesterol: foodItem.cholesterol + cholesterolDifference,
+      };
+
+      setTotalCalories((prevTotal) => prevTotal + calorieDifference); // Update total calories
+      return updatedEntries;
+    });
   };
 
   return (
@@ -228,7 +275,11 @@ export default function Home() {
                 <tr className='bg-gray-200 text-gray-600 uppercase text-sm leading-normal'>
                   <th className='py-3 px-6 text-left'>Food</th>
                   <th className='py-3 px-6 text-left'>Calories</th>
-                  <th className='py-1 px-2 text-left'>Remove</th>
+                  <th className='py-3 px-6 text-left'>Protein</th>
+                  <th className='py-3 px-6 text-left'>Fat</th>
+                  <th className='py-3 px-6 text-left'>Carbs</th>
+                  <th className='py-3 px-6 text-left'>Serving Size</th>
+                  <th className='py-3 px-6 text-left'>Remove</th>
                 </tr>
               </thead>
               <tbody className='text-gray-600 text-sm font-light'>
@@ -239,6 +290,24 @@ export default function Home() {
                   >
                     <td className='py-3 px-6'>{entry.name}</td>
                     <td className='py-3 px-6'>{entry.calories} cal</td>
+                    <td className='py-3 px-6'>{entry.protein} g</td>
+                    <td className='py-3 px-6'>{entry.fat} g</td>
+                    <td className='py-3 px-6'>{entry.carbohydrates} g</td>
+                    <td className='py-3 px-6 flex items-center'>
+                      <button
+                        onClick={() => updateServingSize(index, -1)}
+                        className='bg-red-500 text-white px-2 py-1 rounded-md'
+                      >
+                        -
+                      </button>
+                      <span className='mx-2'>{entry.servingSize}</span>
+                      <button
+                        onClick={() => updateServingSize(index, 1)}
+                        className='bg-green-500 text-white px-2 py-1 rounded-md'
+                      >
+                        +
+                      </button>
+                    </td>
                     <td className='py-3 px-6'>
                       <button
                         onClick={() => handleDeleteFood(index)}
@@ -258,13 +327,13 @@ export default function Home() {
         </div>
 
         {/* Barcode Scanner */}
-        {/* <div className='bg-white mt-5 shadow-md p-8 border-black border-2'>
+        <div className='bg-white mt-5 shadow-md p-8 border-black border-2'>
           <h2 className='text-4xl font-mono font-bold mb-4 flex items-center text-black'>
             <FaBarcode className='mr-2 text-green-500' />
             Scan a Barcode
           </h2>
           <BarcodeScanner onBarcodeDetected={handleBarcodeDetected} />
-        </div> */}
+        </div>
 
         {/* Food Diary */}
         <div className='mt-8 border-black border-2'>
